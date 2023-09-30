@@ -3,6 +3,8 @@ package com.lighthousecorp.clientcrud.services;
 import com.lighthousecorp.clientcrud.dto.ClientDTO;
 import com.lighthousecorp.clientcrud.entities.Client;
 import com.lighthousecorp.clientcrud.repositories.ClientRepository;
+import com.lighthousecorp.clientcrud.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +21,8 @@ public class ClientService {
 
     @Transactional(readOnly = true)
     public ClientDTO findById(Long id) {
-        Client client  = repository.findById(id).get();
+        Client client  = repository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("O recurso não foi encontrado"));
         return new ClientDTO(client);
     }
 
@@ -39,14 +42,23 @@ public class ClientService {
 
     @Transactional
     public ClientDTO update(Long id, ClientDTO dto) {
-        Client entity = repository.getReferenceById(id);
-        copyDtoToEntity(dto, entity);
-        entity = repository.save(entity);
-        return new ClientDTO(entity);
+        try {
+            Client entity = repository.getReferenceById(id);
+            copyDtoToEntity(dto, entity);
+            entity = repository.save(entity);
+            return new ClientDTO(entity);
+        }
+        catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException("O recurso não foi encontrado");
+        }
+
     }
 
     @Transactional
     public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("O recurso não foi encontrado");
+        }
         repository.deleteById(id);
     }
 
