@@ -51,7 +51,6 @@ public class ClientService {
         catch (EntityNotFoundException e) {
             throw new ResourceNotFoundException("O recurso não foi encontrado");
         }
-
     }
 
     @Transactional
